@@ -38,13 +38,12 @@ def init_epd(epd, clear=False, verbose=logging.DEBUG):
 # render image box widget
 #
 ###
-def render_image(canvas, image_array, coord, resize='aspect', rotate=0, padding=0, outline=0):
+def render_image(canvas, image_array, coord, resize='aspect', padding=0, outline=0):
     '''
     @param::canvas: the PIL image canvas
     @param::image_array: the numpy image array
     @param::coord: the user coordiantes of image box
     @param::resize: the resize method: aspect/fill/crop
-    @param::rotate: rotate the image counter clockwise. The rotation happens before the resize.
     @param::padding: the padding around the image
     @param::outline: the width of box outline
     return none
@@ -60,9 +59,6 @@ def render_image(canvas, image_array, coord, resize='aspect', rotate=0, padding=
     crop_box = (0,0,min(w,col),min(h,row))
     # convert to image object
     bmp = Image.fromarray(image_array)
-    # rotate
-    if rotate != 0:
-        bmp = bmp.rotate(rotate)
     # resize
     if resize == 'fill':
         bmp = bmp.resize((w,h))
@@ -135,6 +131,10 @@ def fit_text(text, font_size, width, height, line_padding=2):
             line_len_count = len(t) + 1
             line_num_count += 1
 
+    # add the finish line
+    if line_num_count < max_num_lines:
+        substrs.append(' '.join(tmpstr))
+
     return substrs
         
 def write_text(canvas, text, coord, font_size=16, line_padding=2, font_face='UbuntuMono-Regular.ttf'):
@@ -200,15 +200,18 @@ if __name__ == '__main__':
         canvas = init_epd(epd)
 
         # render image
-        im = Image.open('misc/wow.jpg').convert('L').resize((640,384))
-        foo = np.array(im, dtype = np.uint8)
-        render_image(canvas, foo, (310,8,300,300), resize='crop', padding=3, outline=1)
-        render_image(canvas, foo, (210,8,95,200), rotate=-90, resize='aspect', padding=2, outline=1)
+        im1 = Image.open('misc/wow.jpg').convert('L').resize((640,384))
+        foo = np.array(im1, dtype = np.uint8)
+        im2 = Image.open('misc/wow2.jpg').convert('L')
+        bar = np.array(im2, dtype = np.uint8)
+        render_image(canvas, foo, (310,8,320,375), resize='crop', padding=3, outline=1)
+        render_image(canvas, bar, (210,8,98,200), resize='fill', padding=2, outline=1)
 
         # render text box
         text = u"The noble Paladin, Tirion Fordring, had always believed the savage Orcs to be vile and corrupt. He had spent his life fighting ceaselessly to protect humanity from their foul treachery. But an unexpected act of honor and compassion sets in motion a chain of events that will challenge Tirion's most fundamental beliefs, and force him to decide once and for all who are the men -- and who are the monsters."
-        render_text_box(canvas, text, (8,8,200,200), font_size=10)
-        render_text_box(canvas, text, (8,210,300,150), font_size=26)
+        alphabet = 'W O W'
+        render_text_box(canvas, text, (8,8,200,200), font_size=14)
+        render_text_box(canvas, text, (8,210,300,173), font_size=24)
 
         # display
         display(epd, canvas)
